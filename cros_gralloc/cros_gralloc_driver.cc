@@ -96,17 +96,6 @@ cros_gralloc_driver *cros_gralloc_driver::get_instance()
 	return &s_instance;
 }
 
-#define DRV_INIT(drv)        \
-    if (drv) {                                   \
-        if (drv_init(drv)) {                     \
-            drv_loge("Failed to init driver\n"); \
-            int fd = drv_get_fd(drv);            \
-            drv_destroy(drv);                    \
-            close(fd);                           \
-            drv = nullptr;                       \
-        }                                        \
-    }
-
 #define DRV_DESTROY(drv)    \
     if (drv) {                       \
         int fd = drv_get_fd(drv);    \
@@ -149,11 +138,6 @@ int32_t cros_gralloc_driver::reload()
 			continue;
 		}
 
-		if (drv_init(drv)) {
-			drv_loge("Failed to init driver\n");
-			DRV_DESTROY(drv)
-			continue;
-		}
 		if (!drv_is_feature_supported(drv, DRIVER_DEVICE_FEATURE_VIRGL_QUERY_DEV)) {
 			drv_logi("New added node is virtio-ivishmem node");
 			gpu_grp_type_ |= GPU_GRP_TYPE_HAS_VIRTIO_GPU_IVSHMEM_BIT;
@@ -233,7 +217,7 @@ cros_gralloc_driver::cros_gralloc_driver(): drivers_(GPU_GRP_TYPE_NR, nullptr)
 			drv_loge("failed to init minigbm driver on device %s\n", node);
 			continue;
 		}
-		DRV_INIT(drv);
+
 		int gpu_grp_type_idx = -1;
 		// We have several kinds of virtio-GPU devices:
 		//
